@@ -9,7 +9,7 @@ st.title("🎣 Dự Báo Thời Tiết Câu Cá - Tuyên Quang")
 st.write("Dành riêng cho cần thủ săn Chép, Rô phi, Trôi.")
 
 # Nhập API Key (Bạn có thể dán trực tiếp hoặc dùng Secret của Streamlit)
-api_key = "YOUR_API_KEY_HERE" 
+api_key = "469e873ece82bed4e2c8f188bd979816" 
 city = "Tuyen Quang"
 
 def get_weather(city, api_key):
