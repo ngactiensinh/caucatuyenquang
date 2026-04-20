@@ -2,67 +2,84 @@ import streamlit as st
 import requests
 import pandas as pd
 
-# Cấu hình trang
-st.set_page_config(page_title="Tuyên Quang Fishing Weather", page_icon="🎣")
+st.set_page_config(page_title="Fishing Tuyên Quang", page_icon="🎣")
 
 st.title("🎣 Dự Báo Thời Tiết Câu Cá - Tuyên Quang")
-st.write("Dành riêng cho cần thủ săn Chép, Rô phi, Trôi.")
+st.write("Cập nhật dữ liệu thời gian thực cho cần thủ chuyên nghiệp.")
 
-# Nhập API Key (Bạn có thể dán trực tiếp hoặc dùng Secret của Streamlit)
+# Nhập API Key của bạn tại đây
 api_key = "469e873ece82bed4e2c8f188bd979816" 
-city = "Tuyen Quang"
+# Nếu vẫn lỗi, hãy thử nhập "Tuyen Quang,VN"
+city = "Tuyen Quang,VN"
 
 def get_weather(city, api_key):
+    # Sử dụng đúng endpoint và thêm tham số để lấy áp suất
     url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}&units=metric&lang=vi"
-    response = requests.get(url)
-    return response.json()
+    try:
+        response = requests.get(url)
+        return response.json()
+    except:
+        return None
 
-if api_key != "YOUR_API_KEY_HERE":
+if api_key:
     data = get_weather(city, api_key)
     
-    if data.get("cod") == 200:
+    if data and data.get("cod") == 200:
         temp = data['main']['temp']
         humidity = data['main']['humidity']
+        pressure = data['main']['pressure'] # Áp suất khí quyển
         description = data['weather'][0]['description']
         wind_speed = data['wind']['speed']
         
-        # Hiển thị thông số cơ bản
-        col1, col2, col3 = st.columns(3)
-        col1.metric("Nhiệt độ", f"{temp}°C")
-        col2.metric("Độ ẩm", f"{humidity}%")
-        col3.metric("Gió", f"{wind_speed} m/s")
+        # Hiển thị thông số đẹp mắt
+        st.subheader(f"📍 Địa điểm: {data['name']}")
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Nhiệt độ", f"{temp}°C")
+        c2.metric("Độ ẩm", f"{humidity}%")
+        c3.metric("Áp suất", f"{pressure} hPa")
+        c4.metric("Gió", f"{wind_speed}m/s")
         
-        st.info(f"Trạng thái: {description.capitalize()}")
+        st.success(f"Bầu trời: {description.capitalize()}")
 
-        # Logic đánh giá cho từng loại cá
-        st.subheader("📊 Đánh giá khả năng lên cá")
+        # Phân tích kỹ thuật cho dân chuyên
+        st.divider()
+        st.subheader("📋 Tư vấn kỹ thuật cho cần thủ")
         
-        results = []
+        advice = []
         
-        # Cá Chép
-        if 15 <= temp <= 25:
-            results.append({"Loại cá": "Cá Chép", "Đánh giá": "Tuyệt vời", "Lưu ý": "Thời tiết mát mẻ, chép đi ăn mạnh."})
+        # Logic Cá Chép (Nhạy cảm với áp suất)
+        if 1010 <= pressure <= 1020:
+            chep_stt = "✅ Rất tốt"
+            chep_note = "Áp suất ổn định, cá Chép đi tuần tra tìm mồi mạnh."
         else:
-            results.append({"Loại cá": "Cá Chép", "Đánh giá": "Trung bình", "Lưu ý": "Tránh lúc nắng gắt hoặc quá lạnh."})
-            
-        # Cá Rô Phi
-        if temp > 25 and humidity > 60:
-            results.append({"Loại cá": "Cá Rô Phi", "Đánh giá": "Rất tốt", "Lưu ý": "Rô phi thích nắng ấm và độ ẩm cao."})
-        elif temp < 18:
-            results.append({"Loại cá": "Cá Rô Phi", "Đánh giá": "Kém", "Lưu ý": "Cá lười ăn do nước lạnh."})
-        else:
-            results.append({"Loại cá": "Cá Rô Phi", "Đánh giá": "Ổn", "Lưu ý": "Câu ở tầng nước nông."})
+            chep_stt = "⚠️ Cẩn thận"
+            chep_note = "Áp suất biến động, Chép có thể lửng, khó chạm đáy."
 
-        # Cá Trôi
-        if 22 <= temp <= 30:
-            results.append({"Loại cá": "Cá Trôi", "Đánh giá": "Tốt", "Lưu ý": "Cá trôi ưa ấm, thích hợp câu lục hoặc đài."})
+        # Logic Cá Rô Phi
+        if temp >= 25:
+            ro_stt = "🔥 Cực sung"
+            ro_note = "Trời ấm, Rô phi phàm ăn, thích hợp mồi cám thơm."
         else:
-            results.append({"Loại cá": "Cá Trôi", "Đánh giá": "Trung bình", "Lưu ý": "Cá nhát mồi khi nhiệt độ biến động."})
+            ro_stt = "🧊 Chậm"
+            ro_note = "Nước lạnh Rô phi lười di chuyển."
 
-        df = pd.DataFrame(results)
+        # Logic Cá Trôi
+        if 22 <= temp <= 28 and humidity > 70:
+            troi_stt = "✅ Thuận lợi"
+            troi_note = "Thời tiết oi nóng trước mưa, Trôi thường đè mồi mạnh."
+        else:
+            troi_stt = "⏳ Bình thường"
+            troi_note = "Cá Trôi ăn lai rai, cần xả ổ bền bỉ."
+
+        df = pd.DataFrame([
+            {"Loại cá": "Cá Chép", "Trạng thái": chep_stt, "Lời khuyên": chep_note},
+            {"Loại cá": "Cá Rô Phi", "Trạng thái": ro_stt, "Lời khuyên": ro_note},
+            {"Loại cá": "Cá Trôi", "Trạng thái": troi_stt, "Lời khuyên": troi_note}
+        ])
+        
         st.table(df)
         
+    elif data and data.get("cod") == 401:
+        st.error("Lỗi: API Key chưa được kích hoạt. Bạn vui lòng đợi khoảng 30-60 phút để OpenWeather xác nhận mã này.")
     else:
-        st.error("Không tìm thấy dữ liệu thời tiết. Vui lòng kiểm tra lại API Key.")
-else:
-    st.warning("Vui lòng nhập OpenWeatherMap API Key để bắt đầu!")
+        st.warning("Đang kết nối dữ liệu... Nếu đợi quá lâu, hãy kiểm tra lại kết nối internet hoặc thử lại sau ít phút.")
